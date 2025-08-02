@@ -1,0 +1,45 @@
+#cloud-config
+
+hostname: ${hostname}
+manage_etc_hosts: true
+
+users:
+  - name: ${username}
+    groups: sudo
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh_authorized_keys:
+      - ${ssh_keys}
+    lock_passwd: false
+
+ssh_pwauth: false
+disable_root: true
+
+timezone: ${timezone}
+
+package_update: true
+package_upgrade: false
+
+# Install packages using template iteration
+packages:
+%{ for package in packages ~}
+  - ${package}
+%{ endfor ~}
+
+
+runcmd:
+  - systemctl enable qemu-guest-agent
+  - systemctl start qemu-guest-agent
+  - systemctl enable ssh
+  - systemctl start ssh
+  - echo "Cloud-init completed" > /tmp/cloud-init-done
+  - apt-get update 
+
+growpart:
+  mode: auto
+  devices: ['/']
+  ignore_growroot_disabled: false
+
+resize_rootfs: true
+
+final_message: "VM ${hostname} is ready for use!"
