@@ -1,0 +1,67 @@
+#cloud-config
+
+hostname: ${hostname}
+manage_etc_hosts: true
+
+users:
+  - name: ${username}
+    groups: sudo
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh_authorized_keys:
+      - ${ssh_keys}
+    lock_passwd: false
+    # Set the password for the user
+    passwd: ${password}
+    chpasswd: { expire: false }
+
+ssh_pwauth: true
+disable_root: true
+
+timezone: ${timezone}
+
+package_update: true
+package_upgrade: false
+
+# Add Ceph repository
+apt:
+  sources:
+    ceph:
+      source: "deb [arch=amd64] https://download.ceph.com/debian-quincy/ {{ ubuntu_release }} main"
+      keyid: "53E1B9036FDE0E7B"
+
+# Install basic packages
+packages:
+%{ for package in packages ~}
+  - ${package}
+%{ endfor ~}
+  - python3
+  - python3-pip
+  - ceph-common # Core Ceph utilities
+  - ceph-base # Essential Ceph packages
+  - cephadm
+
+runcmd:
+  # System services
+  - systemctl enable qemu-guest-agent
+  - systemctl start qemu-guest-agent
+  - systemctl enable ssh
+  - systemctl start ssh
+  
+  # Update package list
+  - apt-get update
+  
+  # Install Ansible dependencies
+  - pip3 install --upgrade pip
+  
+  # Final status
+  - echo "Cloud-init completed at $(date)" > /tmp/cloud-init-done
+
+growpart:
+  mode: auto
+  devices: ['/']
+  ignore_growroot_disabled: false
+
+resize_rootfs: true
+
+final_message: "VM ${hostname} is ready! Configure disks with Ansible."

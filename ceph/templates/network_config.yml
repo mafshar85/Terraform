@@ -1,0 +1,18 @@
+version: 2
+ethernets:
+  ${interface}:
+%{ if static_ip != "" ~}
+    dhcp4: false
+    dhcp6: false
+    addresses:
+      - ${static_ip}/24
+    gateway4: ${gateway}
+    nameservers:
+      addresses:
+%{ for dns in dns_servers ~}
+        - ${dns}
+%{ endfor ~}
+%{ else ~}
+    dhcp4: true
+    dhcp6: false
+%{ endif ~}
