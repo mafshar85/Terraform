@@ -1,0 +1,17 @@
+---
+service_dir: "{{ project_dir }}/gitlab"
+service_compose_file: "../roles/gitlab_setup/templates/compose.yml.j2" 
+service_env_template: "../roles/gitlab_setup/templates/.env.j2"
+
+backups_dir: "{{ project_dir }}/gitlab-backup"
+
+gitlab_image_tag: 18.2.1-ce.0
+
+# gitlab domain
+gitlab_main_domain: "git.{{ main_domain }}"
+gitlab_registry_domain: "reg.{{ main_domain }}"
+
+# minio information
+#minio_api_endpoint: https://min.sterserver.ir
+minio_api_endpoint: "min.{{ main_domain }}"
+minio_gitlab_backup_bucket: gitlab_bucket

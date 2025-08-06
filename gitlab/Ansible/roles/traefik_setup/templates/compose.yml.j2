@@ -1,0 +1,85 @@
+networks:
+  web_net:
+    name: web_net
+    external: true
+  app_net:
+    name: app_net
+    external: true
+
+volumes:
+  traefik_data:
+    name: traefik_data
+    external: false
+
+
+services:
+  traefik:
+    image: traefik:${image_tag}
+    container_name: traefik
+    hostname: traefik
+    restart: ${restart_policy}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    command:
+      - "--log.level=INFO"
+      - "--log.filepath=/log-file.log"
+      - "--log.format=json"
+      - "--accesslog=true"
+      - "--accesslog.bufferingsize=100"
+      - "--ping=true" 
+      - "--api=true"
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.network=web_net"
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web-secure.address=:443"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=web-secure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--certificatesresolvers.traefikcerts.acme.email=${acme_email}"
+      - "--certificatesresolvers.traefikcerts.acme.storage=/certs/acme.json"
+{% if traefik_dnschallenge %}
+      - "--certificatesresolvers.traefikcerts.acme.dnschallenge=true"
+      - "--certificatesresolvers.traefikcerts.acme.dnschallenge.provider={{ traefik_dns_provider }}"
+{% else %}
+      - "--certificatesresolvers.traefikcerts.acme.tlschallenge=true"
+{% endif %}
+      - "--providers.file.directory=/traefik"
+    environment:
+      # DNS provider credentials
+{% if traefik_dnschallenge and traefik_dns_provider == 'cloudflare' %}
+      - "CF_API_EMAIL={{ cf_api_email }}"
+      - "CF_DNS_API_TOKEN={{ cf_dns_api_token }}"
+{% endif %}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "traefik_data:/certs"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - web_net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+      - "traefik.http.routers.traefikdashboard.entrypoints=web"
+      - "traefik.http.routers.traefikdashboard.rule=Host(`${traefik_domain}`)"
+      - "traefik.http.routers.traefikdashboard.middlewares=https-redirect"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.web-auth.basicauth.users=${web_auth_user}:${web_auth_pass}"
+      - "traefik.http.routers.traefikdashboard-secure.middlewares=web-auth"
+      - "traefik.http.routers.traefikdashboard-secure.entrypoints=web-secure"
+      - "traefik.http.routers.traefikdashboard-secure.rule=Host(`${traefik_domain}`)"
+      - "traefik.http.routers.traefikdashboard-secure.tls=true"
+      - "traefik.http.routers.traefikdashboard-secure.tls.options=default"
+      - "traefik.http.routers.traefikdashboard-secure.tls.certresolver=traefikcerts"
+      - "traefik.http.routers.traefikdashboard-secure.service=traefikdashboard-svc"
+      - "traefik.http.services.traefikdashboard-svc.loadbalancer.server.port=8080"
+      
+      

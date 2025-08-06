@@ -1,0 +1,39 @@
+#SPDX-License-Identifier: MIT-0
+---
+- name: Create a docker network with name
+  docker_network:
+    name: "{{ item }}"
+    driver_options:
+      com.docker.network.bridge.name: "{{ item }}"
+  loop:
+    - web_net
+    - app_net
+
+
+- name: Creates a directory for the service
+  ansible.builtin.file:
+    path: "{{ service_dir }}"
+    state: directory
+
+
+- name: Copy compose.yml file to service directory
+  ansible.builtin.template:
+    src: "{{ service_compose_file }}"
+    dest: "{{ service_dir }}/compose.yml"
+
+
+- name: Template a .env file to service directory
+  ansible.builtin.template:
+    src: "{{ service_env_template }}"
+    dest: "{{ service_dir }}/.env"
+  when: service_env_template is defined and service_env_template | length > 0
+
+
+- name: Pull images for the project
+  community.docker.docker_compose_v2_pull:
+    project_src: "{{ service_dir }}"
+
+
+- name: Deploy the Docker Compose stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ service_dir }}"

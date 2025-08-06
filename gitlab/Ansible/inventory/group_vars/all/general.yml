@@ -1,0 +1,5 @@
+# main domain address
+main_domain: sterlink.ir  #yourdomain.ir
+
+# main project directory
+project_dir: /opt/services

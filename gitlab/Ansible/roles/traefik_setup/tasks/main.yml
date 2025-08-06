@@ -1,0 +1,6 @@
+---
+- name: Call the common role to deploy the traefik Services
+  ansible.builtin.include_role:
+    name: common_compose_service
+  tags:
+    - deploy_traefik

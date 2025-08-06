@@ -1,0 +1,7 @@
+---
+- name: setup and confuguration traefik service
+  hosts: all
+  become: true
+  gather_facts: true
+  roles:
+    - traefik_setup

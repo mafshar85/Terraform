@@ -1,0 +1,14 @@
+# gitlab root password
+gitlab_root_password_vault: O9BGQIelgm3d8l9k9jxU3d6SGYYTr56Q
+#dafault username is "root"
+
+gitlab_smtp_username_vault: 'sterserver_mailserver@gmail.com'
+gitlab_smtp_password_vault: ''
+#smtp pass come from gmail app
+
+# gitlab backup minio auth
+minio_gitlab_backup_username_vault:
+minio_gitlab_backup_password_vault:
+
+#gitlab backup enc pass
+gitlab_backup_encryption_pass_vault:

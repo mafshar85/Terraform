@@ -1,0 +1,15 @@
+---
+service_dir: "{{ project_dir }}/traefik"
+service_compose_file: "../roles/traefik_setup/templates/compose.yml.j2" 
+service_env_template: "../roles/traefik_setup/templates/.env.j2"
+
+# traefik domain
+traefik_domain: "tra.{{ main_domain }}"
+
+# acme email for renew certificate
+traefik_dnschallenge: true # or false
+traefik_dns_provider: "cloudflare" # e.g., 'cloudflare', 'digitalocean', etc.
+traefik_acme_email: setyourmail@gmail.com
+cf_api_email: "{{ CF_API_EMAIL_VAULT }}"
+cf_dns_api_token: "{{ CF_DNS_API_TOKEN_VAULT }}"
+

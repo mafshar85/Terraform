@@ -1,0 +1,7 @@
+---
+- name: setup and confuguration docker
+  hosts: all
+  become: true
+  gather_facts: true
+  roles:
+    - { role: roles/docker_setup, become: true, tags: docker }
