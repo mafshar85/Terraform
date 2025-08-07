@@ -85,8 +85,8 @@ services:
         gitlab_rails['backup_upload_remote_directory'] = '${gitlab_s3_bucket}'
         gitlab_rails['backup_multipart_chunk_size'] = 104857600 #100M
 
-        # Settings used by GitLab registry
-        registry_external_url = 'https://${gitlab_registry_domain}'
+         # Settings used by GitLab registry
+        registry_external_url 'https://${gitlab_registry_domain}'
         registry_nginx['enable'] = true
         registry_nginx['listen_port'] = 5001
         registry_nginx['listen_https'] = false
@@ -110,31 +110,38 @@ services:
         gitlab_rails['smtp_tls'] = false
         gitlab_rails['smtp_openssl_verify_mode'] = 'peer'
 
+        # Set the sender's email address
+        gitlab_rails['gitlab_email_from'] = 'gitlab@${gitlab_domain}'
+        gitlab_rails['gitlab_email_display_name'] = 'GitLab'
+        gitlab_rails['gitlab_email_reply_to'] = 'noreply@${gitlab_domain}'
+
     networks:
       - web_net
       - app_net
     ports:
-      - "7722:22"
+      - "22:22"
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=web_net"
 
       # git (port 80)
-      - "traefik.http.routers.http-git.rule=Host(`${gitlab_domain}`)"
       - "traefik.http.routers.http-git.entrypoints=web"
-      - "traefik.http.routers.git.rule=Host(`${gitlab_domain}`)"
-      - "traefik.http.routers.git.entrypoints=web-secure"
-      - "traefik.http.routers.git.tls=true"
-      - "traefik.http.routers.git.tls.certresolver=traefikcerts"
-      - "traefik.http.routers.git.service=git"
-      - "traefik.http.services.git.loadbalancer.server.port=80"
+      - "traefik.http.routers.http-git.rule=Host(`${gitlab_domain}`)"
+      - "traefik.http.routers.http-reg.middlewares=https-redirect@docker"
+      - "traefik.http.routers.https-git.entrypoints=web-secure"
+      - "traefik.http.routers.https-git.rule=Host(`${gitlab_domain}`)"
+      - "traefik.http.routers.https-git.tls=true"
+      - "traefik.http.routers.https-git.tls.certresolver=traefikcerts"
+      - "traefik.http.routers.https-git.service=https-git"
+      - "traefik.http.services.https-git.loadbalancer.server.port=80"
 
       # repo (port 5001)
-      - "traefik.http.routers.http-reg.rule=Host(`${gitlab_registry_domain}`)"
       - "traefik.http.routers.http-reg.entrypoints=web"
-      - "traefik.http.routers.reg.rule=Host(`${gitlab_registry_domain}`)"
-      - "traefik.http.routers.reg.entrypoints=web-secure"
-      - "traefik.http.routers.reg.tls=true"
-      - "traefik.http.routers.reg.tls.certresolver=traefikcerts"
-      - "traefik.http.routers.reg.service=reg"
-      - "traefik.http.services.reg.loadbalancer.server.port=5001"
+      - "traefik.http.routers.http-reg.rule=Host(`${gitlab_registry_domain}`)"
+      - "traefik.http.routers.http-reg.middlewares=https-redirect@docker"
+      - "traefik.http.routers.https-reg.entrypoints=web-secure"
+      - "traefik.http.routers.https-reg.rule=Host(`${gitlab_registry_domain}`)"
+      - "traefik.http.routers.https-reg.tls=true"
+      - "traefik.http.routers.https-reg.tls.certresolver=traefikcerts"
+      - "traefik.http.routers.https-reg.service=https-reg"
+      - "traefik.http.services.https-reg.loadbalancer.server.port=5001"
