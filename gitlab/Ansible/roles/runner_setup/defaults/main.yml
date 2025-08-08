@@ -1,0 +1,47 @@
+---
+service_dir: "{{ project_dir }}/runner"
+service_compose_file: "../roles/runner_setup/templates/compose.yml.j2" 
+service_env_template: "../roles/runner_setup/templates/.env.j2"
+
+runner_image_tag: v18.2.1
+container_name: runner
+
+
+# Dynamic configuration for multiple runners
+gitlab:
+  endpoint: http://git.sterlink.ir
+  
+runners:
+  - name: "Runner-Docker-01"
+    token: "glrt-kOdHqGt9u9Yn8qF4Y0GQtG86MQpwOjEKdDozCnU6Ng8.01.171vnruv4"  # Get this from GitLab admin
+    executor: "docker"
+    default_image: "docker:latest"
+    concurrent: 3
+    tags: ["docker", "linux"]
+    privileged: true
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/cache"
+    
+  - name: "Runner-Shell-01"
+    token: "glrt-H0zwuTUMYwkBMR7EPDEctW86MQpwOjEKdDozCnU6Ng8.01.170x7dx0z"  # Different token for each runner
+    executor: "shell"
+    default_image: "ubuntu:20.04"
+    concurrent: 2
+    tags: ["shell", "ubuntu"]
+    privileged: false
+    
+  # - name: "Runner-K8s-01"
+  #   token: "glrt-abc987654321"
+  #   executor: "kubernetes"
+  #   default_image: "ubuntu:20.04"
+  #   concurrent: 5
+  #   tags: ["k8s", "kubernetes"]
+  #   privileged: false
+
+# Global runner settings
+runner_global:
+  concurrent: "{{ runners | map(attribute='concurrent') | sum }}"
+  check_interval: 0
+  connection_max_age: "15m0s"
+  shutdown_timeout: 0

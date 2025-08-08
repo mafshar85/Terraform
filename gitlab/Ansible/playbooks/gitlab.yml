@@ -1,6 +1,6 @@
 ---
 - name: setup and confuguration gitlab service
-  hosts: all
+  hosts:  gitlab-server-01
   become: true
   gather_facts: true
   roles:

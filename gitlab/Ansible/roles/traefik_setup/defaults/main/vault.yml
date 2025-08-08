@@ -5,5 +5,7 @@ traefik_web_auth_pass : '$apr1$ktBmTW29$JhI2HxMDVtsNegvQnfa0k0'
 #htpasswd -nbm arye QdM8ZJ44mfHsqtkTv2S1BcV5qZck7gbYmcHgppUt  #output > traefik_web_auth_pass : $(htp...)
 
 
-CF_DNS_API_TOKEN_VAULT : your_cloudflare_api_token_here
-CF_API_EMAIL_VAULT : your-email
+
+-CF_DNS_API_TOKEN_VAULT : your_cloudflare_api_token_here
+-CF_API_EMAIL_VAULT : your-email
+

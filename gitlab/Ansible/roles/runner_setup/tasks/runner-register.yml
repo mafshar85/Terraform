@@ -1,0 +1,56 @@
+---
+
+- name: Check if runners are registered already
+  shell: |
+      docker compose exec "{{ container_name }}" gitlab-runner list
+  register: check_runners
+  args:
+    chdir: "{{ service_dir }}"
+  failed_when: false
+  changed_when: false
+ 
+
+- name: Display current registered runners
+  debug:
+   # msg: "{{ check_runners }}"
+    var: check_runners.stdout_lines
+  when: check_runners.stdout is defined
+
+
+- name: Generate dynamic runner config
+  ansible.builtin.template:
+    src: runner-config.toml.j2
+    dest: /var/lib/docker/volumes/runner_data/_data/config.toml
+    backup: yes
+  notify: restart runner
+
+
+# - name: Register each runner if not already registered
+#   shell: |
+#     docker compose exec "{{ container_name }}" gitlab-runner register \
+#       --non-interactive \
+#       --url "{{ gitlab.endpoint }}" \
+#       --registration-token "{{ item.token }}" \
+#       --name "{{ item.name }}" \
+#       --executor "{{ item.executor }}" \
+#       --docker-image "{{ item.default_image | default('docker:latest') }}" \
+#       --tag-list "{{ item.tags | join(',') }}" \
+#       {% if item.privileged | default(false) %}--docker-privileged{% endif %} \
+#       {% for volume in item.volumes | default([]) %}--docker-volumes "{{ volume }}" {% endfor %}
+#   args:
+#     chdir: "{{ service_dir }}"
+#   loop: "{{ runners }}"
+#   when: 
+#     - check_runners.stdout is defined
+#     - item.name not in check_runners.stdout
+#   register: registration_result
+#   failed_when: 
+#     - registration_result.rc != 0
+#     - "'already exists' not in registration_result.stderr"
+
+
+# - name: Display registration results
+#   debug:
+#     msg: "Runner {{ item.item.name }} registration: {{ 'Success' if item.rc == 0 else 'Failed/Already exists' }}"
+#   loop: "{{ registration_result.results }}"
+#   when: registration_result.results is defined

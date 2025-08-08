@@ -1,0 +1,10 @@
+---
+- name: setup and confuguration runner service
+  hosts: runner_servers
+  become: true
+  gather_facts: true
+  roles:
+    # - docker_setup
+    # - runner_setup
+    - { role: roles/docker_setup, become: true, tags: docker }
+    - { role: roles/runner_setup, become: true, tags: runner }

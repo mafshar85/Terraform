@@ -1,0 +1,64 @@
+concurrent = {{ runner_global.concurrent }}
+check_interval = {{ runner_global.check_interval }}
+connection_max_age = "{{ runner_global.connection_max_age }}"
+shutdown_timeout = {{ runner_global.shutdown_timeout }}
+
+[session_server]
+  session_timeout = 1800
+
+{% for runner in runners %}
+[[runners]]
+  name = "{{ runner.name }}"
+  url = "{{ gitlab.endpoint }}"
+  id = {{ loop.index }}
+  token = "{{ runner.token }}"
+  executor = "{{ runner.executor }}"
+  {% if runner.executor == 'shell' %}
+  shell = "bash"
+  {% endif %}
+  limit = {{ runner.concurrent }}
+  {% if runner.tags is defined %}
+  tag_list = [{{ runner.tags |
+map('regex_replace', '^(.*)$', '"\\1"') | join(', ') }}]
+  {% endif %}
+  
+  [runners.cache]
+    MaxUploadedArchiveSize = 0
+    [runners.cache.s3]
+    [runners.cache.gcs]
+    [runners.cache.azure]
+  
+  {% if runner.executor == 'docker' %}
+  [runners.docker]
+    tls_verify = false
+    image = "{{ runner.default_image | default('docker:latest') }}"
+    privileged = {{ runner.privileged |
+default(false) | lower }}
+    disable_entrypoint_overwrite = false
+    oom_kill_disable = false
+    disable_cache = false
+    {% if runner.volumes is defined %}
+    volumes = [{{ runner.volumes |
+map('regex_replace', '^(.*)$', '"\\1"') | join(', ') }}]
+    {% else %}
+    volumes = ["/cache"]
+    {% endif %}
+    shm_size = 0
+    network_mtu = 0
+  {% endif %}
+  
+  {% if runner.executor == 'kubernetes' %}
+  [runners.kubernetes]
+    host = ""
+    namespace = "gitlab-runner"
+    privileged = {{ runner.privileged |
+default(false) | lower }}
+    image = "{{ runner.default_image | default('ubuntu:20.04') }}"
+    
+    [[runners.kubernetes.volumes.empty_dir]]
+      name = "cache-dir"
+      mount_path = "/cache"
+      medium = "Memory"
+  {% endif %}
+
+{% endfor %}

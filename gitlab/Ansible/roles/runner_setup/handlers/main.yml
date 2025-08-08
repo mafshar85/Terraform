@@ -1,0 +1,28 @@
+---
+- name: restart runner
+  shell: |
+    docker compose restart "{{ container_name }}"
+  args:
+    chdir: "{{ service_dir }}"
+  listen: "restart runner"
+
+- name: reload runner config
+  shell: |
+    docker compose exec "{{ container_name }}" gitlab-runner restart
+  args:
+    chdir: "{{ service_dir }}"
+  listen: "reload runner config"
+
+- name: stop runner
+  shell: |
+    docker compose stop "{{ container_name }}"
+  args:
+    chdir: "{{ service_dir }}"
+  listen: "stop runner"
+
+- name: start runner
+  shell: |
+    docker compose start "{{ container_name }}"
+  args:
+    chdir: "{{ service_dir }}"
+  listen: "start runner"
