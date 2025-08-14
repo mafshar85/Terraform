@@ -117,10 +117,10 @@ default_user = "ubuntu"
 terraform init
 
 # Plan deployment
-terraform plan -var="selected_environment=k8s"
+terraform plan -var="selected_environment=k8s" -var-file="environments/k8s.tfvars"
 
 # Apply configuration
-terraform apply -var="selected_environment=k8s"
+terraform apply -var="selected_environment=k8s" -var-file="environments/k8s.tfvars"
 ```
 
 ### 5. Access VMs
