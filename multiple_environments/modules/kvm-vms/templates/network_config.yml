@@ -1,0 +1,19 @@
+# modules/kvm-vms/templates/network_config.yml
+version: 2
+ethernets:
+  ${interface}:
+    dhcp4: false
+    addresses:
+      - ${static_ip}/24
+    gateway4: ${gateway}
+    nameservers:
+      addresses:
+%{ for dns in dns_servers ~}
+        - ${dns}
+%{ endfor ~}
+%{ if enable_cluster ~}
+  ${cluster_interface}:
+    dhcp4: false
+    addresses:
+      - ${cluster_ip}/24
+%{ endif ~}
